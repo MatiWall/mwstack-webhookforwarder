@@ -15,14 +15,14 @@ import (
 
 func readSecret() []byte {
 	dat, err := os.ReadFile("webhook-secret.txt")
-	if err != nil  {
+	if err != nil {
 		fmt.Print(err)
 	}
 	return dat
 }
 
 func apiMiddleware(secret []byte) gin.HandlerFunc {
-	return func (c *gin.Context) {
+	return func(c *gin.Context) {
 		c.Set("github-webhook-secret", secret)
 		c.Next()
 	}
@@ -42,7 +42,7 @@ func verifySignature(c *gin.Context) bool {
 	secret = string(secret.([]uint8))
 
 	gotHash := strings.Split(c.GetHeader("X-Hub-Signature-256"), "=")
-	
+
 	if gotHash[0] != "sha256" {
 		return false
 	}
@@ -69,7 +69,7 @@ func verifySignature(c *gin.Context) bool {
 }
 
 func forwardWebhook(c *gin.Context) {
-	if (!verifySignature(c)){
+	if !verifySignature(c) {
 		c.AbortWithStatus(401)
 	}
 
@@ -81,6 +81,8 @@ func main() {
 	secret := readSecret()
 	//fmt.Println(string(secret[:]))
 	router := gin.Default()
+	router.SetTrustedProxies(nil)
+
 	router.Use(apiMiddleware(secret))
 	router.POST("/forward", forwardWebhook)
 	router.GET("", test)
