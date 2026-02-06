@@ -1,2 +1,3 @@
 .vscode/
 webhook-secret.txt
+secrets.yaml

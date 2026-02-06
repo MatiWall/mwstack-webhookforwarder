@@ -12,17 +12,28 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"gopkg.in/yaml.v3"
 )
 
 
 var argoeventsWebhook string = "http://webhook-eventsource-svc.argo.svc.cluster.local:12000/build" // FQDN for webhook service
 
+type Secrets struct {
+	token string
+}
+
 func readSecret() []byte {
-	dat, err := os.ReadFile("webhook-secret.txt")
+	f, err := os.ReadFile("secrets.yaml")
+	
 	if err != nil {
-		fmt.Print(err)
+		fmt.Println("Failed to load secret,")
 	}
-	return dat
+
+	var secrets Secrets
+
+	err = yaml.Unmarshal(f, &secrets)
+
+	return []byte(secrets.token)
 }
 
 func apiMiddleware(secret []byte) gin.HandlerFunc {
