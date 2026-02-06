@@ -18,6 +18,8 @@ import (
 
 var argoeventsWebhook string = "http://webhook-eventsource-svc.argo.svc.cluster.local:12000/build" // FQDN for webhook service
 
+
+
 type Secrets struct {
 	token string
 }
@@ -91,8 +93,29 @@ func forwardWebhook(c *gin.Context) {
 	}
 	fmt.Println("Forwarding message: \n %s",  string(body[:]))
 	
-	http.Post(argoeventsWebhook, "application/json",  bytes.NewReader(body))
-	c.String(http.StatusOK, "Successfully forwarded")
+	req, err := http.NewRequest("POST", argoeventsWebhook, bytes.NewReader(body))
+
+	if err != nil {
+		fmt.Println("Failed to create new request.")
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer resp.Body.Close()
+
+	fmt.Println("Response status: ", resp.Status)
+
+	respBody, _ := io.ReadAll(resp.Body)
+
+	fmt.Println("Response body: ", string(respBody))
 }
 
 func main() {
